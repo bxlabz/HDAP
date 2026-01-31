@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  route-optimizer:
+    build: .
+    environment:
+      - SECRET_KEY=${SECRET_KEY}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+    restart: unless-stopped
+    networks:
+      - route-net
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - route-optimizer
+    restart: unless-stopped
+    networks:
+      - route-net
+
+networks:
+  route-net:
+    driver: bridge
