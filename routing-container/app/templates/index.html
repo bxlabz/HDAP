@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Delivery Route Generator</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Delivery Route Generator</h1>
+            <p class="subtitle">Humanitarian Aid Delivery System</p>
+        </header>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="messages">
+                    {% for category, message in messages %}
+                        <div class="message {{ category }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <main>
+            <section class="upload-section">
+                <h2>Upload Beneficiary Data</h2>
+                <form action="{{ url_for('main.upload') }}" method="post" enctype="multipart/form-data">
+                    <div class="form-group">
+                        <label for="file">Select CSV File:</label>
+                        <input type="file" name="file" id="file" accept=".csv" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Upload &amp; Review</button>
+                </form>
+            </section>
+
+            <section class="info-section">
+                <h2>How It Works</h2>
+                <ol class="steps">
+                    <li><strong>Upload</strong> - Upload your CSV file with beneficiary addresses</li>
+                    <li><strong>Review</strong> - Review data and set depot address</li>
+                    <li><strong>Geocode</strong> - Convert addresses to coordinates</li>
+                    <li><strong>Generate</strong> - Create optimized routes (max 4 stops each)</li>
+                    <li><strong>Download</strong> - Get GPX files for OsmAnd navigation</li>
+                </ol>
+            </section>
+
+            <section class="info-section">
+                <h2>Expected CSV Format</h2>
+                <table class="format-table">
+                    <thead>
+                        <tr>
+                            <th>Column</th>
+                            <th>Required</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>name</code></td>
+                            <td>Yes</td>
+                            <td>Beneficiary's full name</td>
+                        </tr>
+                        <tr>
+                            <td><code>address</code></td>
+                            <td>Yes</td>
+                            <td>Full delivery address (street, city, zip)</td>
+                        </tr>
+                        <tr>
+                            <td><code>phone</code></td>
+                            <td>No</td>
+                            <td>Contact phone number</td>
+                        </tr>
+                        <tr>
+                            <td><code>household_size</code></td>
+                            <td>No</td>
+                            <td>Number of people</td>
+                        </tr>
+                        <tr>
+                            <td><code>items_needed</code></td>
+                            <td>No</td>
+                            <td>Items to deliver</td>
+                        </tr>
+                        <tr>
+                            <td><code>special_items</code></td>
+                            <td>No</td>
+                            <td>Special items (diapers, formula, etc.)</td>
+                        </tr>
+                        <tr>
+                            <td><code>notes</code></td>
+                            <td>No</td>
+                            <td>Delivery notes</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+        </main>
+
+        <footer>
+            <p>Humanitarian Aid Delivery System</p>
+        </footer>
+    </div>
+</body>
+</html>

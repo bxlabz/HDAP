@@ -1,57 +1,190 @@
-# HDAP - Humanitarian Aid Delivery Router
+# Humanitarian Aid Delivery System
 
-A web-based route optimization tool for humanitarian aid delivery operations. Upload addresses, generate optimized multi-stop routes, and export GPX files for navigation.
+A two-container system for managing humanitarian aid deliveries:
 
-## Features
-
-- **CSV/TSV Import** - Upload address lists with beneficiary information
-- **Geocoding** - Automatic address-to-coordinate conversion via OpenStreetMap
-- **Route Optimization** - Nearest neighbor TSP algorithm with proximity clustering
-- **Multi-Route Support** - Configurable max stops per route (3-10)
-- **Radius Filtering** - Exclude addresses outside service area
-- **GPX Export** - Download routes for OsmAnd, Garmin, and other GPS apps
-- **Secure Access** - Password-protected admin interface
+1. **Text Generator** - Creates bilingual packing slips for delivery volunteers
+2. **Route Generator** - Creates optimized delivery routes with GPX files for OsmAnd navigation
 
 ## Quick Start
 
-### Prerequisites
-- Docker & Docker Compose
+### Using Docker Compose (Recommended)
 
-### Installation
+```bash
+git clone https://github.com/bxlabz/HDAP.git
+cd HDAP
+docker-compose up --build
+```
 
-1. Clone this repository:
-   ```bash
-   git clone https://github.com/bxlabz/HDAP.git
-   cd HDAP
-   ```
+Services will be available at:
+- **Text Generator**: http://localhost:8081
+- **Route Generator**: http://localhost:8080
 
-2. Create a `.env` file with your credentials:
-   ```
-   SECRET_KEY=your-secure-random-key
-   ADMIN_PASSWORD=your-admin-password
-   ```
+### Running Individually
 
-3. Build and run:
-   ```bash
-   docker-compose up -d
-   ```
+#### Text Generator Container
+```bash
+cd textgen-container
+pip install -r requirements.txt
+python -m flask run --host=0.0.0.0 --port=8081
+```
 
-4. Open http://localhost:8080 and login with username `admin`
+#### Route Generator Container
+```bash
+cd routing-container
+pip install -r requirements.txt
+python -m flask run --host=0.0.0.0 --port=8080
+```
 
-## Documentation
+## Usage
 
-- [Installation Guide](INSTALLATION_GUIDE.md) - Detailed setup instructions
-- [Technical Architecture](TECHNICAL_DIAGRAM.md) - System design and diagrams
+### Text Generator (Port 8081)
 
-> HTML versions with styled visuals available in [docs/html/](docs/html/)
+1. **Upload** your CSV file with beneficiary data
+2. **Review** the parsed data - fix any flagged issues
+3. **Generate** packing slips with bilingual format
+4. **Download** individual files or all as ZIP
 
-## Tech Stack
+Output files are named: `Route_{num}_{seq}_{initials}_{last4}.txt`
 
-- **Backend**: Python 3.11, Flask 3.0
-- **Frontend**: HTML5, JavaScript, TailwindCSS
-- **Geocoding**: OpenStreetMap Nominatim
-- **Containerization**: Docker, Nginx
+### Route Generator (Port 8080)
+
+1. **Upload** your CSV file with beneficiary addresses
+2. **Review** data and optionally set a depot address
+3. **Geocode** all addresses (converts to GPS coordinates)
+4. **Generate** optimized routes (max 4 stops per route)
+5. **Download** GPX files for OsmAnd + manifest
+
+## CSV Format
+
+Both containers accept CSV files with these columns:
+
+| Column | Required | Description |
+|--------|----------|-------------|
+| `name` | Yes | Beneficiary's full name |
+| `address` | Yes | Full delivery address |
+| `phone` | Recommended | Contact phone number |
+| `household_size` | No | Number of people in household |
+| `items_needed` | No | Items to deliver |
+| `special_items` | No | Diapers, formula, pet food |
+| `contact_preference` | No | How to contact |
+| `notes` | No | Additional notes |
+
+Sample data is provided in `shared/sample_data.csv`.
+
+## Output Formats
+
+### Packing Slip (Text Generator)
+
+```
+================================================================
+                    DELIVERY / ENTREGA
+================================================================
+ID: Route_1_01_MG_4567
+================================================================
+
+TELEFONO / PHONE: (555) 123-4567
+
+----------------------------------------------------------------
+HOGAR / HOUSEHOLD
+----------------------------------------------------------------
+Numero de personas / Number of people: 4
+
+----------------------------------------------------------------
+ARTICULOS NECESARIOS / ITEMS NEEDED
+----------------------------------------------------------------
+Rice Beans Cooking Oil Canned Vegetables
+
+****************************************************************
+*                 SPECIAL ITEMS / ARTICULOS ESPECIALES         *
+****************************************************************
+* Diapers (size 3)                                             *
+****************************************************************
+
+----------------------------------------------------------------
+CONTACTO / CONTACT PREFERENCE
+----------------------------------------------------------------
+Call before delivery
+
+================================================================
+```
+
+### GPX File (Route Generator)
+
+OsmAnd-compatible GPX with:
+- Ordered waypoints for each stop
+- Name, address, phone in waypoint descriptions
+- Track connecting all points
+- Optional depot as start/end point
+
+### Manifest
+
+Text summary of all routes with:
+- Route numbers and stop counts
+- Distance and duration estimates (when available)
+- Full stop details for each route
+
+## Technical Details
+
+### Route Optimization
+
+1. **Geocoding**: Uses OpenStreetMap Nominatim (1 req/sec rate limit)
+2. **Clustering**: K-means algorithm groups nearby addresses
+3. **Optimization**: OSRM trip service for TSP solving
+4. **Fallback**: Nearest-neighbor algorithm if OSRM unavailable
+
+### Dependencies
+
+**Text Generator:**
+- Flask 3.0.0
+- phonenumbers 8.13.0
+
+**Route Generator:**
+- Flask 3.0.0
+- geopy 2.4.1 (Nominatim geocoding)
+- scikit-learn 1.3.2 (clustering)
+- gpxpy 1.6.1 (GPX generation)
+- requests 2.31.0 (OSRM API)
+
+## File Structure
+
+```
+delivery-system/
+├── docker-compose.yml
+├── README.md
+├── routing-container/
+│   ├── Dockerfile
+│   ├── requirements.txt
+│   ├── app/
+│   │   ├── main.py
+│   │   ├── routes.py
+│   │   ├── csv_parser.py
+│   │   ├── geocoder.py
+│   │   ├── optimizer.py
+│   │   ├── gpx_generator.py
+│   │   └── templates/
+│   └── static/
+├── textgen-container/
+│   ├── Dockerfile
+│   ├── requirements.txt
+│   ├── app/
+│   │   ├── main.py
+│   │   ├── routes.py
+│   │   ├── csv_parser.py
+│   │   ├── phone_formatter.py
+│   │   ├── text_generator.py
+│   │   └── templates/
+│   └── static/
+└── shared/
+    └── sample_data.csv
+```
+
+## Notes
+
+- Geocoding uses free Nominatim service - be respectful of rate limits
+- OSRM uses public demo server - for production, deploy your own
+- Session data is stored server-side - restart clears data
+- For large datasets, consider adding database persistence
 
 ## License
 
-MIT
+For humanitarian use.

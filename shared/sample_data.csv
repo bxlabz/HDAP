@@ -1,0 +1,14 @@
+name,phone,address,household_size,items_needed,special_items,contact_preference,notes
+Maria Garcia,555-123-4567,123 Main St Los Angeles CA 90012,4,Rice Beans Cooking Oil Canned Vegetables,Diapers (size 3),Call before delivery,Gate code: 1234
+Juan Rodriguez,(555) 234-5678,456 Oak Ave Los Angeles CA 90013,2,Rice Beans Pasta Sauce Cereal,,Text preferred,Apartment 2B
+Ana Martinez,5552345678,789 Pine Rd Los Angeles CA 90014,6,Rice Beans Oil Flour Sugar Milk,Baby formula (0-6 months) Diapers (newborn),Any contact method,Large family - extra portions needed
+Carlos Hernandez,555.345.6789,321 Elm St Los Angeles CA 90015,3,Beans Rice Canned Fruit Peanut Butter,Dog food (small breed),Call only,Has small dog
+Sofia Lopez,,654 Maple Dr Los Angeles CA 90016,5,Rice Beans Oil Pasta Tomato Sauce,,Text or call,No phone on file
+Miguel Sanchez,555-456-7890,987 Cedar Ln Los Angeles CA 90017,1,Rice Beans Canned Soup Crackers,,Call preferred,Senior - may need help carrying
+Isabella Torres,555 567 8901,147 Birch Blvd Los Angeles CA 90018,4,Rice Beans Oil Cereal Milk Bread,Cat food,Text only,Second floor apartment
+Diego Ramirez,(555)678-9012,258 Walnut Way Los Angeles CA 90019,3,Rice Beans Pasta Canned Meat,,Any method,
+Lucia Morales,555-789-0123,369 Spruce St Los Angeles CA 90020,2,Rice Beans Oil Tuna Crackers,Diapers (size 5),Call before,Toddler in household
+Fernando Diaz,555-890-1234,741 Ash Ave Los Angeles CA 90021,5,Rice Beans Flour Oil Sugar Eggs,Pet food (2 cats),Text preferred,Multi-generational household
+Elena Ruiz,555-901-2345,852 Hickory Rd Los Angeles CA 90022,4,Rice Beans Canned Vegetables Pasta,,Call anytime,
+Roberto Flores,555-012-3456,963 Chestnut Ct Los Angeles CA 90023,3,Rice Beans Oil Bread Peanut Butter Jelly,,Text or call,Kids with allergies - no nuts in items
+Carmen Vargas,555-123-4568,174 Sycamore Pl Los Angeles CA 90024,2,Rice Beans Soup Crackers Juice,Dog food (large breed),Call only,Mobility issues - deliver to door

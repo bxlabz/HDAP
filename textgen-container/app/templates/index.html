@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Packing Slip Generator</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Packing Slip Generator</h1>
+            <p class="subtitle">Humanitarian Aid Delivery System</p>
+        </header>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="messages">
+                    {% for category, message in messages %}
+                        <div class="message {{ category }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <main>
+            <section class="upload-section">
+                <h2>Upload Files</h2>
+                <form action="{{ url_for('main.upload') }}" method="post" enctype="multipart/form-data">
+                    <div class="form-group">
+                        <label for="file">Beneficiary CSV File (required):</label>
+                        <input type="file" name="file" id="file" accept=".csv" required>
+                        <p class="hint">The CSV file with beneficiary data</p>
+                    </div>
+                    <div class="form-group">
+                        <label for="manifest">Route Manifest JSON (optional):</label>
+                        <input type="file" name="manifest" id="manifest" accept=".json">
+                        <p class="hint">From the routing app - ensures packing slips match delivery routes</p>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Upload &amp; Review</button>
+                </form>
+            </section>
+
+            <section class="info-section">
+                <h2>How It Works</h2>
+                <ol>
+                    <li><strong>With Route Manifest:</strong> Upload both the CSV and the <code>route_manifest.json</code> from the routing app. Packing slips will be numbered to match delivery routes (Route 1 Stop 1, Route 1 Stop 2, etc.)</li>
+                    <li><strong>Without Manifest:</strong> Upload just the CSV. Packing slips will be numbered sequentially (1, 2, 3...)</li>
+                </ol>
+            </section>
+
+            <section class="info-section">
+                <h2>Expected CSV Format</h2>
+                <p>Your CSV file should include the following columns:</p>
+                <table class="format-table">
+                    <thead>
+                        <tr>
+                            <th>Column</th>
+                            <th>Required</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>name</code></td>
+                            <td>Yes</td>
+                            <td>Beneficiary's full name</td>
+                        </tr>
+                        <tr>
+                            <td><code>phone</code></td>
+                            <td>Yes*</td>
+                            <td>Phone number (any format)</td>
+                        </tr>
+                        <tr>
+                            <td><code>address</code></td>
+                            <td>Yes</td>
+                            <td>Delivery address</td>
+                        </tr>
+                        <tr>
+                            <td><code>household_size</code></td>
+                            <td>Yes*</td>
+                            <td>Number of people in household</td>
+                        </tr>
+                        <tr>
+                            <td><code>items_needed</code></td>
+                            <td>Yes*</td>
+                            <td>List of items to deliver</td>
+                        </tr>
+                        <tr>
+                            <td><code>special_items</code></td>
+                            <td>No</td>
+                            <td>Diapers, formula, pet food, etc.</td>
+                        </tr>
+                        <tr>
+                            <td><code>contact_preference</code></td>
+                            <td>No</td>
+                            <td>How to contact beneficiary</td>
+                        </tr>
+                        <tr>
+                            <td><code>notes</code></td>
+                            <td>No</td>
+                            <td>Additional notes</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <p class="note">* Items marked Yes* will generate warnings if missing but won't prevent processing.</p>
+            </section>
+        </main>
+
+        <footer>
+            <p>Humanitarian Aid Delivery System</p>
+        </footer>
+    </div>
+</body>
+</html>

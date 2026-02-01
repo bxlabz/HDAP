@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Download Routes - Route Generator</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Routes Generated</h1>
+            <p class="subtitle">{{ routes|length }} routes with {{ routes|sum(attribute='stop_count') }} total stops</p>
+        </header>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="messages">
+                    {% for category, message in messages %}
+                        <div class="message {{ category }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <main>
+            <section class="download-section">
+                <a href="{{ url_for('main.download_all') }}" class="btn btn-primary btn-large">
+                    Download All (ZIP)
+                </a>
+                <a href="{{ url_for('main.download_manifest') }}" class="btn btn-secondary">
+                    Download Manifest (TXT)
+                </a>
+                <a href="{{ url_for('main.download_manifest_json') }}" class="btn btn-secondary">
+                    Download Manifest (JSON)
+                </a>
+            </section>
+
+            <p class="note" style="text-align: center; margin-top: 10px;">
+                Use the JSON manifest with the Packing Slip Generator to match delivery order.
+            </p>
+
+            <section class="files-section">
+                <h2>GPX Files</h2>
+                <div class="file-list">
+                    {% for filename, content in gpx_files %}
+                        <div class="file-item">
+                            <span class="file-name">{{ filename }}</span>
+                            <a href="{{ url_for('main.download_gpx', index=loop.index0) }}" class="btn btn-small">
+                                Download
+                            </a>
+                        </div>
+                    {% endfor %}
+                </div>
+            </section>
+
+            <section class="routes-section">
+                <h2>Route Summary</h2>
+                {% for route in routes %}
+                    <div class="route-card">
+                        <div class="route-header">
+                            <h3>Route {{ route.route_number }}</h3>
+                            <span class="route-stats">
+                                {{ route.stop_count }} stops
+                                {% if route.total_distance > 0 %}
+                                    | {{ "%.1f"|format(route.total_distance * 0.621371) }} miles
+                                {% endif %}
+                                {% if route.estimated_duration > 0 %}
+                                    | ~{{ route.estimated_duration|int }} min
+                                {% endif %}
+                            </span>
+                        </div>
+                        <ol class="stop-list">
+                            {% for b in route.beneficiaries %}
+                                <li>
+                                    <strong>{{ b.name }}</strong><br>
+                                    <span class="address">{{ b.address }}</span><br>
+                                    <span class="phone">{{ b.phone or 'No phone' }}</span>
+                                </li>
+                            {% endfor %}
+                        </ol>
+                    </div>
+                {% endfor %}
+            </section>
+
+            <section class="preview-section">
+                <h2>Manifest Preview</h2>
+                <div class="preview-box">
+                    <pre>{{ manifest }}</pre>
+                </div>
+            </section>
+
+            <div class="form-actions">
+                <a href="{{ url_for('main.review') }}" class="btn btn-secondary">Back to Review</a>
+                <a href="{{ url_for('main.reset') }}" class="btn btn-secondary">Start Over</a>
+            </div>
+        </main>
+
+        <footer>
+            <p>Humanitarian Aid Delivery System</p>
+        </footer>
+    </div>
+</body>
+</html>

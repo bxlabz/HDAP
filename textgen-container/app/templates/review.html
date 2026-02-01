@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Review Data - Packing Slip Generator</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container wide">
+        <header>
+            <h1>Review Beneficiary Data</h1>
+            <p class="subtitle">Verify data before generating packing slips</p>
+        </header>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="messages">
+                    {% for category, message in messages %}
+                        <div class="message {{ category }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        {% if warnings %}
+            <div class="warnings-section">
+                <h3>File Warnings</h3>
+                <ul>
+                    {% for warning in warnings %}
+                        <li>{{ warning }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
+
+        <main>
+            <div class="stats">
+                <div class="stat">
+                    <span class="stat-value">{{ beneficiaries|length }}</span>
+                    <span class="stat-label">Total Records</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-value">{{ beneficiaries|selectattr('errors', 'equalto', [])|list|length }}</span>
+                    <span class="stat-label">Valid Records</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-value">{{ beneficiaries|selectattr('flagged')|list|length }}</span>
+                    <span class="stat-label">Flagged</span>
+                </div>
+            </div>
+
+            <form action="{{ url_for('main.update') }}" method="post" id="review-form">
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Exclude</th>
+                                <th>Row</th>
+                                <th>Name</th>
+                                <th>Phone</th>
+                                <th>Address</th>
+                                <th>Household</th>
+                                <th>Items</th>
+                                <th>Special</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for b in beneficiaries %}
+                                <tr class="{% if b.errors %}row-error{% elif b.warnings %}row-warning{% endif %}">
+                                    <td>
+                                        <input type="checkbox" name="exclude" value="{{ loop.index0 }}"
+                                               {% if b.get('excluded') %}checked{% endif %}>
+                                    </td>
+                                    <td>{{ b.row_number }}</td>
+                                    <td>{{ b.name }}</td>
+                                    <td class="{% if not b.phone_valid %}invalid{% endif %}">
+                                        {{ b.formatted_phone or b.phone or 'N/A' }}
+                                    </td>
+                                    <td class="truncate" title="{{ b.address }}">{{ b.address }}</td>
+                                    <td>{{ b.household_size or 'N/A' }}</td>
+                                    <td class="truncate" title="{{ b.items_needed }}">{{ b.items_needed or 'N/A' }}</td>
+                                    <td class="truncate" title="{{ b.special_items }}">{{ b.special_items or '-' }}</td>
+                                    <td>
+                                        {% if b.errors %}
+                                            <span class="badge error" title="{{ b.errors|join(', ') }}">Error</span>
+                                        {% elif b.warnings %}
+                                            <span class="badge warning" title="{{ b.warnings|join(', ') }}">Warning</span>
+                                        {% else %}
+                                            <span class="badge success">OK</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-secondary">Update Exclusions</button>
+                </div>
+            </form>
+
+            <form action="{{ url_for('main.generate') }}" method="post" class="generate-form">
+                <div class="form-group inline">
+                    <label for="route_num">Route Number:</label>
+                    <input type="number" name="route_num" id="route_num" value="1" min="1" max="999">
+                </div>
+                <div class="form-actions">
+                    <a href="{{ url_for('main.index') }}" class="btn btn-secondary">Upload New File</a>
+                    <button type="submit" class="btn btn-primary">Generate Packing Slips</button>
+                </div>
+            </form>
+        </main>
+
+        <footer>
+            <p>Humanitarian Aid Delivery System</p>
+        </footer>
+    </div>
+</body>
+</html>

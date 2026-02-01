@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Review Data - Route Generator</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container wide">
+        <header>
+            <h1>Review Beneficiary Data</h1>
+            <p class="subtitle">Verify addresses and configure routing options</p>
+        </header>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="messages">
+                    {% for category, message in messages %}
+                        <div class="message {{ category }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        {% if warnings %}
+            <div class="warnings-section">
+                <h3>File Warnings</h3>
+                <ul>
+                    {% for warning in warnings %}
+                        <li>{{ warning }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
+
+        <main>
+            <div class="stats">
+                <div class="stat">
+                    <span class="stat-value">{{ beneficiaries|length }}</span>
+                    <span class="stat-label">Total Records</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-value">{{ beneficiaries|selectattr('latitude')|list|length }}</span>
+                    <span class="stat-label">Geocoded</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-value">{{ beneficiaries|selectattr('flagged')|list|length }}</span>
+                    <span class="stat-label">Flagged</span>
+                </div>
+            </div>
+
+            <!-- Depot Configuration -->
+            <section class="config-section">
+                <h2>Depot / Starting Point</h2>
+                <form action="{{ url_for('main.update') }}" method="post" id="config-form">
+                    <div class="form-group">
+                        <label for="depot_address">Depot Address (optional):</label>
+                        <input type="text" name="depot_address" id="depot_address"
+                               value="{{ depot.get('address', '') }}"
+                               placeholder="Enter warehouse/starting point address">
+                        {% if depot.get('latitude') %}
+                            <span class="geocode-status success">Geocoded</span>
+                        {% elif depot.get('error') %}
+                            <span class="geocode-status error">{{ depot.error }}</span>
+                        {% endif %}
+                    </div>
+            </section>
+
+            <!-- Beneficiary Table -->
+            <section>
+                <h2>Beneficiaries</h2>
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Exclude</th>
+                                <th>Row</th>
+                                <th>Name</th>
+                                <th>Address</th>
+                                <th>Phone</th>
+                                <th>Geocoded</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for b in beneficiaries %}
+                                <tr class="{% if b.errors %}row-error{% elif b.geocode_error %}row-warning{% elif b.warnings %}row-warning{% endif %}">
+                                    <td>
+                                        <input type="checkbox" name="exclude" value="{{ loop.index0 }}"
+                                               {% if b.get('excluded') %}checked{% endif %}>
+                                    </td>
+                                    <td>{{ b.row_number }}</td>
+                                    <td>{{ b.name }}</td>
+                                    <td class="truncate" title="{{ b.address }}">{{ b.address }}</td>
+                                    <td>{{ b.phone or 'N/A' }}</td>
+                                    <td>
+                                        {% if b.latitude and b.longitude %}
+                                            <span class="badge success" title="{{ b.latitude }}, {{ b.longitude }}">Yes</span>
+                                        {% elif b.geocode_error %}
+                                            <span class="badge error" title="{{ b.geocode_error }}">Failed</span>
+                                        {% else %}
+                                            <span class="badge">Pending</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if b.errors %}
+                                            <span class="badge error" title="{{ b.errors|join(', ') }}">Error</span>
+                                        {% elif b.warnings %}
+                                            <span class="badge warning" title="{{ b.warnings|join(', ') }}">Warning</span>
+                                        {% else %}
+                                            <span class="badge success">OK</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-secondary">Save Changes</button>
+                </div>
+                </form>
+            </section>
+
+            <!-- Geocoding -->
+            <section class="action-section">
+                <h2>Step 1: Geocode Addresses</h2>
+                <p>Convert addresses to GPS coordinates using OpenStreetMap Nominatim.</p>
+                <form action="{{ url_for('main.geocode') }}" method="post">
+                    <button type="submit" class="btn btn-primary" {% if geocoded %}disabled{% endif %}>
+                        {% if geocoded %}Geocoding Complete{% else %}Start Geocoding{% endif %}
+                    </button>
+                </form>
+                {% if geocoded %}
+                    {% set failed_count = beneficiaries|selectattr('geocode_error')|list|length %}
+                    <p class="note">Geocoding has been completed. You can proceed to generate routes.</p>
+                    {% if failed_count > 0 %}
+                        <div class="failed-geocodes-notice">
+                            <p class="warning-text">{{ failed_count }} address(es) failed to geocode.</p>
+                            <a href="{{ url_for('main.download_failed_geocodes') }}" class="btn btn-small btn-secondary">
+                                Download Failed Geocodes CSV
+                            </a>
+                        </div>
+                    {% endif %}
+                {% else %}
+                    <p class="note">Note: This may take a few seconds due to rate limiting.</p>
+                {% endif %}
+            </section>
+
+            <!-- Generate Routes -->
+            <section class="action-section">
+                <h2>Step 2: Generate Routes</h2>
+                <form action="{{ url_for('main.generate') }}" method="post" class="generate-form">
+                    <div class="form-row">
+                        <div class="form-group inline">
+                            <label for="min_stops">Min Stops per Route:</label>
+                            <input type="number" name="min_stops" id="min_stops" value="3" min="1" max="10">
+                        </div>
+                        <div class="form-group inline">
+                            <label for="max_stops">Max Stops per Route:</label>
+                            <input type="number" name="max_stops" id="max_stops" value="4" min="1" max="10">
+                        </div>
+                        <div class="form-group inline">
+                            <label>
+                                <input type="checkbox" name="use_osrm" value="true" checked>
+                                Use OSRM optimization
+                            </label>
+                        </div>
+                    </div>
+                    <p class="note">Routes will have between min and max stops. Small clusters will be merged with nearby routes when possible.</p>
+                    <div class="form-actions">
+                        <a href="{{ url_for('main.index') }}" class="btn btn-secondary">Upload New File</a>
+                        <button type="submit" class="btn btn-primary" {% if not geocoded %}disabled{% endif %}>
+                            Generate Routes
+                        </button>
+                    </div>
+                </form>
+            </section>
+        </main>
+
+        <footer>
+            <p>Humanitarian Aid Delivery System</p>
+        </footer>
+    </div>
+</body>
+</html>
